@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ransomware Deconstructed: An Interactive Analysis</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Neutral Stone -->
+    <!-- Application Structure Plan: A multi-stage, narrative-driven SPA that guides the user through the reverse engineering investigation step-by-step. This structure was chosen to make the complex technical journey easy to follow and engaging, mirroring the actual process of discovery rather than presenting all information at once in a static dashboard. Navigation is handled by a stepper, and each section uses diagrams and interactive elements to explain a specific phase of the analysis. -->
+    <!-- Visualization & Content Choices:
+        - Network Traffic: Goal=Organize. Method=HTML/CSS Diagram. Interaction=Hover to cross-reference info. Justification=Visually separates the two main network activities for clarity.
+        - Code Logic: Goal=Organize. Method=HTML/CSS Flowchart. Interaction=Click to see pseudo-code. Justification=Simplifies complex function calls into a clear, high-level process flow.
+        - Decryption Twist: Goal=Inform. Method=JS Animation. Interaction=Button click. Justification=Creates an impactful "Aha!" moment to highlight the key turning point in the investigation.
+        - VM Explanation: Goal=Inform/Relationships. Method=Interactive JS Emulator. Interaction=Step/Run buttons to simulate execution. Justification=Allows users to actively engage with the core algorithm, making the complex VM logic tangible and understandable.
+        - CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f5f5f4; /* stone-100 */
+            color: #292524; /* stone-800 */
+        }
+        .nav-item {
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+        }
+        .nav-item.active {
+            background-color: #60a5fa; /* blue-400 */
+            color: white;
+            font-weight: 600;
+        }
+        .nav-item.completed {
+            background-color: #a3e635; /* lime-400 */
+            color: #1c1917; /* stone-900 */
+        }
+        .content-section {
+            display: none;
+        }
+        .content-section.active {
+            display: block;
+        }
+        .code-block {
+            background-color: #1c1917; /* stone-900 */
+            color: #e7e5e4; /* stone-200 */
+            border-radius: 0.5rem;
+            padding: 1rem;
+            font-family: monospace;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+        .flowchart-node {
+            border: 2px solid #a8a29e; /* stone-400 */
+            background-color: #fafaf9; /* stone-50 */
+            border-radius: 0.5rem;
+            padding: 0.75rem 1.25rem;
+            text-align: center;
+            transition: all 0.2s;
+        }
+        .flowchart-node:hover {
+            border-color: #60a5fa; /* blue-400 */
+            box-shadow: 0 4px 14px 0 rgba(0, 0, 0, 0.1);
+        }
+        .arrow {
+            position: relative;
+            text-align: center;
+        }
+        .arrow::after {
+            content: '↓';
+            font-size: 2rem;
+            color: #a8a29e; /* stone-400 */
+            line-height: 1;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 50;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.5);
+        }
+        .modal-content {
+            background-color: #fafaf9; /* stone-50 */
+            margin: 10% auto;
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+            max-width: 90%;
+            width: 600px;
+        }
+        .byte-cell {
+            width: 2.5rem;
+            height: 2.5rem;
+            font-family: monospace;
+            border: 1px solid #d6d3d1; /* stone-300 */
+        }
+        .byte-cell.highlight {
+             background-color: #fef08a; /* yellow-200 */
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <div class="container mx-auto p-4 md:p-8">
+        <header class="text-center mb-8">
+            <h1 class="text-4xl md:text-5xl font-bold text-stone-900">Deconstructing "nukoneZ's Ransomware"</h1>
+            <p class="text-lg text-stone-600 mt-2">An Interactive Case Study in Reverse Engineering</p>
+            <div class="mt-4 bg-lime-100 border-l-4 border-lime-500 text-lime-800 p-4 rounded-r-lg inline-block">
+                <p class="font-semibold">Flag Found: <span id="flag-display" class="font-mono bg-stone-800 text-lime-300 px-2 py-1 rounded">r4ns0mw@rE_c4n_d... (click to reveal)</span></p>
+            </div>
+        </header>
+
+        <nav class="flex flex-wrap justify-center gap-2 md:gap-4 mb-8">
+            <div id="nav-0" class="nav-item active p-3 rounded-lg shadow-sm" data-step="0">1. Introduction</div>
+            <div id="nav-1" class="nav-item p-3 rounded-lg shadow-sm" data-step="1">2. Triage</div>
+            <div id="nav-2" class="nav-item p-3 rounded-lg shadow-sm" data-step="2">3. Deconstruction</div>
+            <div id="nav-3" class="nav-item p-3 rounded-lg shadow-sm" data-step="3">4. The Twist</div>
+            <div id="nav-4" class="nav-item p-3 rounded-lg shadow-sm" data-step="4">5. The VM</div>
+            <div id="nav-5" class="nav-item p-3 rounded-lg shadow-sm" data-step="5">6. Flag Recovery</div>
+        </nav>
+
+        <main id="main-content" class="bg-white p-6 md:p-8 rounded-xl shadow-lg">
+            <!-- Step 0: Introduction -->
+            <div id="step-0" class="content-section active">
+                <h2 class="text-3xl font-bold mb-4">1. Introduction</h2>
+                <p class="text-lg leading-relaxed text-stone-700">This case study documents the reverse engineering process of a simulated ransomware challenge. The objective was to analyze a malicious executable (`Click_Me.exe`) and an accompanying network capture (`RecordUser.pcapng`) to understand its operation and ultimately recover the flag. The analysis revealed a sophisticated, multi-stage challenge involving static code analysis, network forensics, cryptography, and the emulation of a custom virtual machine.</p>
+            </div>
+
+            <!-- Step 1: Triage -->
+            <div id="step-1" class="content-section">
+                <h2 class="text-3xl font-bold mb-4">2. Initial Triage & Reconnaissance</h2>
+                <p class="mb-6 text-stone-700">The investigation began by examining the provided artifacts to gather low-level intelligence from both the network traffic and the executable's static data.</p>
+                <div class="grid md:grid-cols-2 gap-8">
+                    <div>
+                        <h3 class="text-2xl font-semibold mb-3">Network Analysis</h3>
+                        <div class="space-y-4">
+                            <div class="flowchart-node p-4">
+                                <h4 class="font-bold">`Click_Me.exe` Starts</h4>
+                                <p class="text-sm text-stone-600">The malicious process is executed.</p>
+                            </div>
+                            <div class="arrow"></div>
+                             <div class="flowchart-node p-4">
+                                <h4 class="font-bold">HTTP GET Request</h4>
+                                <p class="text-sm text-stone-600">Downloads <code class="bg-stone-200 px-1 rounded">/anonymous</code> file from <code class="bg-stone-200 px-1 rounded">192.168.56.1:8000</code>.</p>
+                            </div>
+                             <div class="arrow"></div>
+                             <div class="flowchart-node p-4">
+                                <h4 class="font-bold">TCP Connection to C2</h4>
+                                <p class="text-sm text-stone-600">Connects to C2 server at <code class="bg-stone-200 px-1 rounded">192.168.134.132:8888</code>.</p>
+                            </div>
+                            <div class="arrow"></div>
+                            <div class="flowchart-node p-4">
+                                <h4 class="font-bold">Data Exfiltration</h4>
+                                <p class="text-sm text-stone-600">Sends an encrypted payload to the C2 server.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <h3 class="text-2xl font-semibold mb-3">Static Analysis (Key Strings)</h3>
+                        <div class="code-block text-sm">
+                            <p class="text-lime-300">// Key Material</p>
+                            <p>"hackingisnotacrime"</p>
+                            <br>
+                            <p class="text-lime-300">// C2 Server IP Address</p>
+                            <p>"192.168.134.132"</p>
+                            <br>
+                            <p class="text-lime-300">// Target File Paths</p>
+                            <p>"C:\\ProgramData\\Important\\user.html"</p>
+                            <p>"C:\\ProgramData\\Important\\user.html.enc"</p>
+                            <br>
+                            <p class="text-lime-300">// Imported Crypto Functions</p>
+                            <p>"EVP_aes_256_ecb"</p>
+                            <p>"SHA256"</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Step 2: Deconstruction -->
+            <div id="step-2" class="content-section">
+                <h2 class="text-3xl font-bold mb-4">3. Deconstructing the Logic</h2>
+                <p class="mb-6 text-stone-700">A deep dive into the executable's code using Ghidra revealed the core operational flow. Click on a function to see its purpose.</p>
+                <div class="flex flex-col items-center space-y-2">
+                    <div class="flowchart-node interactive-node" data-modal="modal-main">`main()`</div>
+                    <div class="arrow"></div>
+                    <div class="flowchart-node interactive-node" data-modal="modal-orchestrator">`sub_001FB3` (Orchestrator)</div>
+                    <div class="arrow"></div>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-x-8 gap-y-4 w-full">
+                        <div class="flex flex-col items-center space-y-2">
+                             <div class="flowchart-node interactive-node w-full" data-modal="modal-key-gen">`sub_0016E4` (Key Gen)</div>
+                             <div class="arrow"></div>
+                             <div class="flowchart-node w-full bg-lime-100 border-lime-400">SHA256 Hash (The Key)</div>
+                        </div>
+                         <div class="flex flex-col items-center space-y-2">
+                             <div class="flowchart-node interactive-node w-full" data-modal="modal-encrypt">`sub_00171D` (Encryption)</div>
+                             <div class="arrow"></div>
+                             <div class="flowchart-node w-full bg-red-100 border-red-400">Encrypted Data</div>
+                        </div>
+                         <div class="flex flex-col items-center space-y-2">
+                             <div class="flowchart-node interactive-node w-full" data-modal="modal-c2">`sub_001AEB` (C2 Comms)</div>
+                             <div class="arrow"></div>
+                             <div class="flowchart-node w-full bg-blue-100 border-blue-400">Data Exfiltrated</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 3: The Twist -->
+            <div id="step-3" class="content-section">
+                <h2 class="text-3xl font-bold mb-4">4. The Twist: A Multi-Stage Payload</h2>
+                <p class="mb-6 text-stone-700">The logical next step was to decrypt the exfiltrated data. Using the discovered key (the SHA256 hash of `hackingisnotacrime`) and the known algorithm (AES-256-ECB), we attempted decryption. The result was not a simple text flag.</p>
+                 <div class="grid md:grid-cols-2 gap-8 items-center">
+                    <div>
+                         <h3 class="text-2xl font-semibold mb-3">Decryption Attempt</h3>
+                         <div class="code-block text-sm">
+                            <p><span class="text-sky-400">from</span> Crypto.Cipher <span class="text-sky-400">import</span> AES</p>
+                            <p><span class="text-sky-400">import</span> hashlib</p>
+                            <br>
+                            <p>key_hash = hashlib.sha256(<span class="text-yellow-300">b'hackingisnotacrime'</span>).digest()</p>
+                            <p>cipher = AES.new(key_hash, AES.MODE_ECB)</p>
+                            <p>decrypted = cipher.decrypt(ciphertext_from_pcap)</p>
+                         </div>
+                         <button id="decrypt-btn" class="mt-4 w-full bg-blue-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-600 transition-colors">Run Decryption</button>
+                    </div>
+                    <div id="decryption-result" class="flowchart-node p-8 text-center h-48 flex items-center justify-center">
+                        <span class="text-2xl text-stone-500">Waiting for decryption...</span>
+                    </div>
+                 </div>
+                 <p id="twist-explanation" class="mt-6 text-lg leading-relaxed text-stone-700 hidden">The "MZ" header indicates a Windows executable! The ransomware's true purpose was not to destroy data, but to encrypt and exfiltrate a hidden second-stage payload. The original `user.html` was actually a DLL in disguise.</p>
+            </div>
+            
+            <!-- Step 4: The VM -->
+            <div id="step-4" class="content-section">
+                 <h2 class="text-3xl font-bold mb-4">5. The Final Secret: A Virtual Machine</h2>
+                <p class="mb-6 text-stone-700">The decrypted DLL (`decrypted_library.dll`) was loaded into Ghidra for a final round of analysis. The core logic was found in a function named `gen`, which turned out to be a miniature virtual machine. This VM executes instructions (bytecode) from the `anonymous` file downloaded in the first step.</p>
+                <div class="bg-stone-100 p-6 rounded-lg">
+                    <h3 class="text-xl font-semibold mb-4 text-center">VM Instruction Set</h3>
+                    <div class="grid grid-cols-2 md:grid-cols-5 gap-4 text-center">
+                        <div class="p-3 bg-white rounded-lg shadow-sm"><strong class="text-blue-600">Opcode 1</strong><br>Store Value</div>
+                        <div class="p-3 bg-white rounded-lg shadow-sm"><strong class="text-blue-600">Opcode 2</strong><br>Store Key</div>
+                        <div class="p-3 bg-white rounded-lg shadow-sm"><strong class="text-blue-600">Opcode 3</strong><br>Add/Sub</div>
+                        <div class="p-3 bg-white rounded-lg shadow-sm"><strong class="text-red-600">Opcode 4</strong><br>XOR & Build</div>
+                        <div class="p-3 bg-white rounded-lg shadow-sm"><strong class="text-lime-600">Opcode 5</strong><br>Halt</div>
+                    </div>
+                    <div class="mt-6">
+                        <h4 class="font-semibold text-center mb-2">VM Memory Buffers & Bytecode Input</h4>
+                        <div class="code-block text-xs md:text-sm">
+                            <p><span class="text-lime-300">// The 'anonymous' file provides the instructions</span></p>
+                            <p>Bytecode: [<span id="vm-bytecode" class="text-yellow-300">01 00 48, 01 01 65, ...</span>]</p>
+                            <br>
+                            <p><span class="text-lime-300">// The VM uses internal memory buffers</span></p>
+                            <p>Data Buffer 1: [<span id="vm-data1">...</span>]</p>
+                            <p>Data Buffer 2: [<span id="vm-data2">...</span>]</p>
+                            <p>Intermediate Buffer: [<span id="vm-data3">...</span>]</p>
+                            <br>
+                            <p><span class="text-lime-300">// Opcode 4 (XOR) writes the final output here</span></p>
+                            <p>FLAG BUFFER: [<span id="vm-flag" class="text-yellow-300">...</span>]</p>
+                        </div>
+                    </div>
+                     <div class="mt-4 flex justify-center space-x-4">
+                        <button id="vm-step-btn" class="bg-stone-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-stone-700">Step</button>
+                        <button id="vm-run-btn" class="bg-blue-500 text-white font-bold py-2 px-6 rounded-lg hover:bg-blue-600">Run</button>
+                        <button id="vm-reset-btn" class="bg-red-500 text-white font-bold py-2 px-6 rounded-lg hover:bg-red-600">Reset</button>
+                    </div>
+                    <div id="vm-status" class="mt-3 text-center text-stone-600 font-mono text-sm">VM Idle. Press 'Run' or 'Step'.</div>
+                </div>
+            </div>
+            
+            <!-- Step 5: Flag Recovery -->
+            <div id="step-5" class="content-section">
+                <h2 class="text-3xl font-bold mb-4">6. Flag Recovery</h2>
+                <p class="mb-6 text-lg leading-relaxed text-stone-700">By emulating the virtual machine's logic with the `anonymous` bytecode as input, the final flag was constructed. The journey through network analysis, static deconstruction, and VM emulation led to the successful recovery of the secret data.</p>
+                <div class="bg-stone-900 text-lime-300 p-8 rounded-lg text-center font-mono text-xl md:text-2xl break-all shadow-inner">
+                    r4ns0mw@rE_c4n_d357r0y_f1l3s_n0w
+                </div>
+                 <div class="mt-6 text-center">
+                    <button id="copy-flag-btn" class="bg-lime-500 text-stone-900 font-bold py-3 px-6 rounded-lg hover:bg-lime-600 transition-colors">Copy Flag</button>
+                 </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modals for Deconstruction Flowchart -->
+    <div id="modal-main" class="modal">
+        <div class="modal-content">
+            <h3 class="text-xl font-bold mb-2">Function: `main()`</h3>
+            <p>The entry point of the executable. Its primary job is to call the main orchestrator function, `sub_001FB3`, to begin the ransomware process.</p>
+            <button class="modal-close mt-4 bg-stone-200 px-4 py-2 rounded-lg">Close</button>
+        </div>
+    </div>
+     <div id="modal-orchestrator" class="modal">
+        <div class="modal-content">
+            <h3 class="text-xl font-bold mb-2">Function: `sub_001FB3` (Orchestrator)</h3>
+            <p>This is the central control function. It coordinates all major steps of the attack: reading the target file, calling the key generation routine, calling the encryption routine, writing the encrypted file, and finally calling the C2 communication routine.</p>
+            <button class="modal-close mt-4 bg-stone-200 px-4 py-2 rounded-lg">Close</button>
+        </div>
+    </div>
+    <div id="modal-key-gen" class="modal">
+        <div class="modal-content">
+            <h3 class="text-xl font-bold mb-2">Function: `sub_0016E4` (Key Generation)</h3>
+            <p>A simple but critical function. It takes a hardcoded string (`hackingisnotacrime`) as input and calculates its SHA256 hash. This 32-byte hash is returned and used as the secret key for encryption.</p>
+            <button class="modal-close mt-4 bg-stone-200 px-4 py-2 rounded-lg">Close</button>
+        </div>
+    </div>
+    <div id="modal-encrypt" class="modal">
+        <div class="modal-content">
+            <h3 class="text-xl font-bold mb-2">Function: `sub_00171D` (Encryption)</h3>
+            <p>This function is a wrapper for the OpenSSL library. It initializes an AES-256-ECB cipher using the key generated in the previous step and then encrypts the contents of the file buffer.</p>
+            <button class="modal-close mt-4 bg-stone-200 px-4 py-2 rounded-lg">Close</button>
+        </div>
+    </div>
+    <div id="modal-c2" class="modal">
+        <div class="modal-content">
+            <h3 class="text-xl font-bold mb-2">Function: `sub_001AEB` (C2 Communication)</h3>
+            <p>Handles all networking. It establishes a TCP connection to the hardcoded C2 server IP address, then sends the size of the encrypted file, followed by the encrypted data itself.</p>
+            <button class="modal-close mt-4 bg-stone-200 px-4 py-2 rounded-lg">Close</button>
+        </div>
+    </div>
+
+<script>
+(function () {
+    'use strict';
+
+    document.addEventListener('DOMContentLoaded', function () {
+        const navItems = document.querySelectorAll('.nav-item');
+        const contentSections = document.querySelectorAll('.content-section');
+        let currentStep = 0;
+
+        function updateView(step) {
+            currentStep = step;
+            navItems.forEach((nav, index) => {
+                nav.classList.remove('active');
+                if (index < step) {
+                    nav.classList.add('completed');
+                } else {
+                    nav.classList.remove('completed');
+                }
+                if (index == step) {
+                    nav.classList.add('active');
+                }
+            });
+            contentSections.forEach((section, index) => {
+                section.classList.toggle('active', index == step);
+            });
+        }
+
+        navItems.forEach(nav => {
+            nav.addEventListener('click', () => {
+                const step = parseInt(nav.dataset.step);
+                if (!isNaN(step)) {
+                    updateView(step);
+                }
+            });
+        });
+
+        const flagDisplay = document.getElementById('flag-display');
+        const fullFlag = 'r4ns0mw@rE_c4n_d357r0y_f1l3s_n0w';
+        if (flagDisplay) {
+            flagDisplay.addEventListener('click', () => {
+                if (flagDisplay.textContent !== fullFlag) {
+                    flagDisplay.textContent = fullFlag;
+                } else {
+                    flagDisplay.textContent = 'r4ns0mw@rE_c4n_d... (click to reveal)';
+                }
+            });
+        }
+
+        const modals = document.querySelectorAll('.modal');
+        const interactiveNodes = document.querySelectorAll('.interactive-node');
+        interactiveNodes.forEach(node => {
+            node.addEventListener('click', () => {
+                const modalId = node.dataset.modal;
+                const modal = document.getElementById(modalId);
+                if (modal) {
+                    modal.style.display = 'block';
+                }
+            });
+        });
+
+        const modalCloses = document.querySelectorAll('.modal-close');
+        modalCloses.forEach(btn => {
+            btn.addEventListener('click', () => {
+                btn.closest('.modal').style.display = 'none';
+            });
+        });
+
+        window.addEventListener('click', (event) => {
+            if (event.target.classList.contains('modal')) {
+                event.target.style.display = 'none';
+            }
+        });
+
+        const decryptBtn = document.getElementById('decrypt-btn');
+        const resultDiv = document.getElementById('decryption-result');
+        const twistExplanation = document.getElementById('twist-explanation');
+        if (decryptBtn) {
+            decryptBtn.addEventListener('click', () => {
+                resultDiv.innerHTML = '<span class="text-xl text-blue-500">Decrypting...</span>';
+                setTimeout(() => {
+                    resultDiv.innerHTML = '<div class="code-block text-lg"><span class="text-red-400">Result: </span>b\'MZ\\x90\\x00\\x03...\'</div>';
+                    if (twistExplanation) {
+                        twistExplanation.classList.remove('hidden');
+                    }
+                }, 1500);
+            });
+        }
+
+        const vmBytecodeEl = document.getElementById('vm-bytecode');
+        const vmData1El = document.getElementById('vm-data1');
+        const vmData2El = document.getElementById('vm-data2');
+        const vmData3El = document.getElementById('vm-data3');
+        const vmFlagEl = document.getElementById('vm-flag');
+        const vmStatusEl = document.getElementById('vm-status');
+        const stepBtn = document.getElementById('vm-step-btn');
+        const runBtn = document.getElementById('vm-run-btn');
+        const resetBtn = document.getElementById('vm-reset-btn');
+
+        const bytecode = [
+            1, 0, 114, 1, 1, 52, 1, 2, 110, 1, 3, 115, 1, 4, 48, 1, 5, 109, 1, 6, 119, 1, 7, 64,
+            1, 8, 114, 1, 9, 69, 1, 10, 95, 1, 11, 99, 1, 12, 52, 1, 13, 110, 1, 14, 95, 1, 15, 100,
+            1, 16, 51, 1, 17, 53, 1, 18, 55, 1, 19, 114, 1, 20, 48, 1, 21, 121, 1, 22, 95, 1, 23, 102,
+            1, 24, 49, 1, 25, 108, 1, 26, 51, 1, 27, 115, 1, 28, 95, 1, 29, 110, 1, 30, 48, 1, 31, 119,
+            2, 0, 0, 2, 1, 0, 2, 2, 0, 2, 3, 0,
+            3, 0, 0, 3, 1, 0, 3, 2, 0, 3, 3, 0, 3, 4, 0, 3, 5, 0, 3, 6, 0, 3, 7, 0, 3, 8, 0, 3, 9, 0, 3, 10, 0,
+            3, 11, 0, 3, 12, 0, 3, 13, 0, 3, 14, 0, 3, 15, 0, 3, 16, 0, 3, 17, 0, 3, 18, 0, 3, 19, 0, 3, 20, 0,
+            3, 21, 0, 3, 22, 0, 3, 23, 0, 3, 24, 0, 3, 25, 0, 3, 26, 0, 3, 27, 0, 3, 28, 0, 3, 29, 0, 3, 30, 0, 3, 31, 0,
+            4, 0, 4, 1, 4, 2, 4, 3, 4, 4, 4, 5, 4, 6, 4, 7, 4, 8, 4, 9, 4, 10, 4, 11, 4, 12, 4, 13, 4, 14, 4, 15, 4, 16,
+            4, 17, 4, 18, 4, 19, 4, 20, 4, 21, 4, 22, 4, 23, 4, 24, 4, 25, 4, 26, 4, 27, 4, 28, 4, 29, 4, 30, 4, 31, 5
+        ];
+
+        let data1, data2, data3, flag_buffer, ip;
+        const BUFFER_SIZE = 256;
+
+        function resetVM() {
+            data1 = new Uint8Array(BUFFER_SIZE);
+            data2 = new Uint8Array(BUFFER_SIZE);
+            data3 = new Uint8Array(BUFFER_SIZE);
+            flag_buffer = new Uint8Array(BUFFER_SIZE);
+            ip = 0;
+            updateVMDisplay();
+            vmStatusEl.textContent = "VM Reset. Ready to run.";
+        }
+
+        function updateVMDisplay() {
+            vmBytecodeEl.innerHTML = '';
+            bytecode.forEach((b, i) => {
+                const span = document.createElement('span');
+                span.textContent = b.toString(16).padStart(2, '0') + ' ';
+                if (i === ip) {
+                    span.classList.add('highlight', 'bg-yellow-300');
+                }
+                vmBytecodeEl.appendChild(span);
+            });
+
+            const toHex = (arr) => Array.from(arr.slice(0, 32)).map(b => b.toString(16).padStart(2, '0')).join(' ') + '...';
+            vmData1El.textContent = toHex(data1);
+            vmData2El.textContent = toHex(data2);
+            vmData3El.textContent = toHex(data3);
+            vmFlagEl.textContent = Array.from(flag_buffer.slice(0, 32)).map(b => b ? String.fromCharCode(b) : '_').join('');
+        }
+
+        function stepVM() {
+            if (ip >= bytecode.length) {
+                vmStatusEl.textContent = "Bytecode execution finished.";
+                return;
+            }
+
+            const opcode = bytecode[ip];
+            vmStatusEl.textContent = `Executing opcode ${opcode} at position ${ip}`;
+
+            switch (opcode) {
+                case 1:
+                    if (ip + 2 < bytecode.length) {
+                        const index = bytecode[ip + 1];
+                        if (index < BUFFER_SIZE) data1[index] = bytecode[ip + 2];
+                    }
+                    ip += 3;
+                    break;
+                case 2:
+                    if (ip + 2 < bytecode.length) {
+                        const index = bytecode[ip + 1];
+                        if (index < BUFFER_SIZE) data2[index] = bytecode[ip + 2];
+                    }
+                    ip += 3;
+                    break;
+                case 3:
+                    if (ip + 2 < bytecode.length) {
+                        const index = bytecode[ip + 1], value = bytecode[ip + 2];
+                        if (index < BUFFER_SIZE) {
+                            const result = (index % 2) === 0 ? data1[index] + value : data1[index] - value;
+                            data3[index] = result & 0xFF;
+                        }
+                    }
+                    ip += 3;
+                    break;
+                case 4:
+                    if (ip + 1 < bytecode.length) {
+                        const index = bytecode[ip + 1];
+                        if (index < BUFFER_SIZE) {
+                            flag_buffer[index] = data3[index] ^ data2[index & 3];
+                        }
+                    }
+                    ip += 2;
+                    break;
+                case 5:
+                    vmStatusEl.textContent = "Halt instruction (5) reached. Flag generation complete.";
+                    ip = bytecode.length;
+                    break;
+                default:
+                    vmStatusEl.textContent = `Unknown opcode ${opcode}. Halting.`;
+                    ip = bytecode.length;
+            }
+            updateVMDisplay();
+        }
+
+        if (stepBtn && runBtn && resetBtn) {
+            stepBtn.addEventListener('click', stepVM);
+            runBtn.addEventListener('click', () => {
+                const interval = setInterval(() => {
+                    if (ip >= bytecode.length || (bytecode[ip] === 5)) {
+                        if(bytecode[ip] === 5) stepVM();
+                        clearInterval(interval);
+                        return;
+                    }
+                    stepVM();
+                }, 50);
+            });
+            resetBtn.addEventListener('click', resetVM);
+            resetVM();
+        }
+        
+        const copyFlagBtn = document.getElementById('copy-flag-btn');
+        if (copyFlagBtn) {
+            copyFlagBtn.addEventListener('click', () => {
+                navigator.clipboard.writeText(fullFlag).then(() => {
+                    copyFlagBtn.textContent = 'Copied!';
+                    setTimeout(() => { copyFlagBtn.textContent = 'Copy Flag'; }, 2000);
+                }).catch(err => {
+                    console.error('Failed to copy flag: ', err);
+                });
+            });
+        }
+    });
+})();
+</script>
+
+</body>
+</html>
