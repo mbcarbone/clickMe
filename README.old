@@ -1,2 +1,0 @@
-pip list
-Package Version ------------ ------- pip 23.0.1 pycryptodome 3.23.0 setuptools 66.1.1
