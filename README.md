@@ -9,12 +9,12 @@ The investigation revealed a multi-stage challenge involving:Network traffic ana
 Decryption of a hidden second-stage payload (a DLL).Reverse engineering a custom virtual machine within the DLL.Emulating the VM with the correct bytecode to generate the final flag.
 
 
-* Phase 1: 
-### Initial Triage
-Network Analysis (Wireshark)
+* Phase 1: Initial Triage
+** Network Analysis (Wireshark) **
 The RecordUser.pcapng file immediately provided two critical artifacts:
 1. An HTTP Download: The executable downloads a small file named anonymous. This file was extracted and later identified as bytecode for the VM.
 2. A TCP C2 Stream: The executable connects to 192.168.134.132 on port 8888 and sends a payload. This payload was extracted and identified as the encrypted second-stage DLL.Static Analysis
+
 Analyzing the strings within Click_Me.exe provided a clear roadmap
 Key Material: ``` hackingisnotacrimeC2 Server: 192.168.134.132 ```
 Target File: ``` C:\ProgramData\Important\user.html ```
@@ -43,7 +43,7 @@ The decrypted DLL was analyzed, and its exported functions (gen_from_file, get_r
 
 This function was a simple, custom virtual machine that processed bytecode.
 
-The VM had five opcodes:
+## The VM had five opcodes:
 1: Store a value in memory buffer
 2: Store a value in memory buffer
 3: Perform addition or subtraction on buffer 1 and store in buffer 
@@ -51,10 +51,12 @@ The VM had five opcodes:
 5: Halt execution.The bytecode for this VM was the anonymous file downloaded in Phase 1.
 
 ### Flag Recovery
-By writing a Python script to emulate the VM and feeding it the anonymous bytecode, the final flag was generated.The Flagr4ns0mw@rE_c4n_d357r0y_f1l3s_n0w
+By writing a Python script to emulate the VM and feeding it the anonymous bytecode, the final flag was generated.
 
-### Tools UsedWireshark: For network traffic analysis and payload extraction.
-Ghidra: For static analysis and reverse engineering.
-Python 3: For decryption and VM emulation.
-pycryptodome library for AES decryption.
-
+## Tools Used
+* [Wireshark](https://www.wireshark.org/) (Version X.Y.Z) - For network packet analysis.
+* [Ghidra](https://ghidra-sre.org/) (Version X.Y.Z) - For static analysis and disassembly/decompilation.
+* [Python 3](https://www.python.org/) (Version 3.X.Y) - For scripting decryption and VM emulation.
+    * `pycryptodome` library - For AES decryption.
+    * `hashlib` library - For SHA256 hashing.
+* Hex Editor (e.g., HxD, 010 Editor) - For examining binary data.
