@@ -292,7 +292,7 @@
                 <div class="flex flex-col items-center space-y-2">
                     <div class="flowchart-node interactive-node" data-modal="modal-main">`main()`</div>
                     <div class="arrow"></div>
-                    <div class="flowchart-node interactive-node" data-modal="modal-orchestrator">`ccf()` (Orchestrator)</div>
+                    <div class="flowchart-node interactive-node" data-modal="modal-orchestrator">`sub_001FB3` (Orchestrator)</div>
                     <div class="arrow"></div>
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-x-8 gap-y-4 w-full">
                         <div class="flex flex-col items-center space-y-2">
@@ -393,13 +393,13 @@
     <div id="modal-main" class="modal">
         <div class="modal-content">
             <h3 class="text-xl font-bold mb-2">Function: `main()`</h3>
-            <p>The entry point of the executable. Its primary job is to call the main orchestrator function, `ccf()`, to begin the ransomware process.</p>
+            <p>The entry point of the executable. Its primary job is to call the main orchestrator function, `sub_001FB3`, to begin the ransomware process.</p>
             <button class="modal-close mt-4 bg-stone-200 px-4 py-2 rounded-lg">Close</button>
         </div>
     </div>
      <div id="modal-orchestrator" class="modal">
         <div class="modal-content">
-            <h3 class="text-xl font-bold mb-2">Function: `ccf()` (Orchestrator)</h3>
+            <h3 class="text-xl font-bold mb-2">Function: `sub_001FB3` (Orchestrator)</h3>
             <p>This is the central control function. It coordinates all major steps of the attack: reading the target file, calling the key generation routine, calling the encryption routine, writing the encrypted file, and finally calling the C2 communication routine.</p>
             <button class="modal-close mt-4 bg-stone-200 px-4 py-2 rounded-lg">Close</button>
         </div>
