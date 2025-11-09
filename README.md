@@ -61,5 +61,5 @@ By writing a Python script to emulate the VM and feeding it the anonymous byteco
 * [Python 3](https://www.python.org/) (Version 3.11.2) - For scripting decryption and VM emulation.
     * `pycryptodome` library - For AES decryption.
     * `hashlib` library - For SHA256 hashing.
-* [hexdump] from util-linux (Version 2.38.1 - For examining binary data.
-* [Google Gemini] (Model Version 2.5 - For math, reasoning and code.
+* [hexdump](https://github.com/util-linux/util-linux) (Version 2.38.1) - For examining binary data.
+* [Google Gemini](https://gemini.google.com/) (Model Version 2.5 pro) - For math, reasoning and code.
