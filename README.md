@@ -1,6 +1,8 @@
 # Deconstructing "nukoneZ's Ransomware" - A CTF Writeup
 
-## This repository contains the analysis and solution for the "nukoneZ's Ransomware" reverse engineering challenge from crackmes.one.Challenge Overview
+## This repository contains the analysis and solution for the "nukoneZ's Ransomware" reverse engineering challenge from crackmes.one.
+
+### Challenge Overview
 
 The challenge provides a Windows executable (Click_Me.exe) and a network capture file (RecordUser.pcapng). The goal is to reverse engineer the ransomware's behavior to recover an encrypted "flag," which is the secret key needed to prove the challenge has been solved.
 
