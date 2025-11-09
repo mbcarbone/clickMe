@@ -56,9 +56,9 @@ This function was a simple, custom virtual machine that processed bytecode.
 By writing a Python script to emulate the VM and feeding it the anonymous bytecode, the final flag was generated.
 
 ## Tools Used
-* [Wireshark](https://www.wireshark.org/) (Version X.Y.Z) - For network packet analysis.
-* [Ghidra](https://ghidra-sre.org/) (Version X.Y.Z) - For static analysis and disassembly/decompilation.
-* [Python 3](https://www.python.org/) (Version 3.X.Y) - For scripting decryption and VM emulation.
+* [Wireshark](https://www.wireshark.org/) (Version 4.6.0) - For network packet analysis.
+* [Ghidra](https://ghidra-sre.org/) (Version 11.3.2) - For static analysis and disassembly/decompilation.
+* [Python 3](https://www.python.org/) (Version 3.11.2) - For scripting decryption and VM emulation.
     * `pycryptodome` library - For AES decryption.
     * `hashlib` library - For SHA256 hashing.
 * Hex Editor (e.g., HxD, 010 Editor) - For examining binary data.
