@@ -18,9 +18,11 @@ The RecordUser.pcapng file immediately provided two critical artifacts:
 2. A TCP C2 Stream: The executable connects to 192.168.134.132 on port 8888 and sends a payload. This payload was extracted and identified as the encrypted second-stage DLL.Static Analysis
 
 Analyzing the strings within Click_Me.exe provided a clear roadmap
-Key Material: ``` hackingisnotacrimeC2 Server: 192.168.134.132 ```
-Target File: ``` C:\ProgramData\Important\user.html ```
-Crypto Functions: Imports for SHA256 and EVP_aes_256_ecb confirmed the cryptographic primitives.
+
+* **Key Material:** `hackingisnotacrime`
+* **C2 Server:** `192.168.134.132`
+* **Target File:** `C:\ProgramData\Important\user.html`
+* **Crypto Functions:** `SHA256`, `EVP_aes_256_ecb`
 
 * Phase 2: Deconstructing the RansomwareBy tracing the code from main, we identified the core logic within the sub_001FB3 function.
 1. Key Generation: The program calculates the SHA256 hash of the string hackingisnotacrime. This 32-byte hash is used as the AES key.
@@ -46,10 +48,13 @@ The decrypted DLL was analyzed, and its exported functions (gen_from_file, get_r
 This function was a simple, custom virtual machine that processed bytecode.
 
 ## The VM had five opcodes:
-1. Store a value in memory buffer
-3. Perform addition or subtraction on buffer 1 and store in buffer 
-4. Perform an XOR operation between buffers 3 and 3, writing the result to the final flag buffer.
-5. Halt execution.The bytecode for this VM was the anonymous file downloaded in Phase 1.
+1. Store a value in memory buffer.
+2. Store a value in memory **Buffer 2** (the 4-byte key).
+3. Perform addition or subtraction on buffer 1 and store in buffer. 
+4. Perform an XOR operation between Buffer 3 (the intermediate values) and Buffer 2 (the 4-byte key), writing the result to the final Flag Buffer.
+5. Halt execution. 
+
+The bytecode for this VM was the anonymous file downloaded in Phase 1.
 
 ### Flag Recovery
 By writing a Python script to emulate the VM and feeding it the anonymous bytecode, the final flag was generated.
