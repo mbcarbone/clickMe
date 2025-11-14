@@ -11,7 +11,8 @@ The investigation revealed a multi-stage challenge involving:Network traffic ana
 Decryption of a hidden second-stage payload (a DLL).Reverse engineering a custom virtual machine within the DLL.Emulating the VM with the correct bytecode to generate the final flag.
 
 
-* Phase 1: Initial Triage
+***Phase 1:*** Initial Triage
+
 ** Network Analysis (Wireshark) **
 The RecordUser.pcapng file immediately provided two critical artifacts:
 1. An HTTP Download: The executable downloads a small file named anonymous. This file was extracted and later identified as bytecode for the VM.
@@ -24,12 +25,13 @@ Analyzing the strings within Click_Me.exe provided a clear roadmap
 * **Target File:** `C:\ProgramData\Important\user.html`
 * **Crypto Functions:** `SHA256`, `EVP_aes_256_ecb`
 
-* Phase 2: Deconstructing the RansomwareBy tracing the code from main, we identified the core logic within the sub_001FB3 function.
+***Phase 2:*** Deconstructing the RansomwareBy tracing the code from main, we identified the core logic within the sub_001FB3 function.
+
 1. Key Generation: The program calculates the SHA256 hash of the string hackingisnotacrime. This 32-byte hash is used as the AES key.
 2. Encryption: The program encrypts the file C:\ProgramData\Important\user.html using AES-256-ECB with the generated key.
 3. Exfiltration: It then connects to the C2 server and sends the encrypted file.
 
-* Phase 3: The Twist - A Hidden DLLDecrypting the exfiltrated payload from the C2 stream revealed it was not a flag but a Windows DLL, identified by the "MZ" header. This was the second stage of the challenge.
+***Phase 3:*** The Twist - A Hidden DLLDecrypting the exfiltrated payload from the C2 stream revealed it was not a flag but a Windows DLL, identified by the "MZ" header. This was the second stage of the challenge.
 
 ### Key decryption logic
 ``` import hashlib
@@ -42,7 +44,8 @@ decryption_key = sha256.digest()
 ```
 ### ... decryption code ...
 ### Output started with b'MZ...', confirming it's an executable.
-* Phase 4: The Final Secret - A Custom VM
+
+***Phase 4:*** The Final Secret - A Custom VM
 The decrypted DLL was analyzed, and its exported functions (gen_from_file, get_result_bytes) pointed to an internal function named gen.
 
 This function was a simple, custom virtual machine that processed bytecode.
