@@ -13,7 +13,7 @@ Decryption of a hidden second-stage payload (a DLL).Reverse engineering a custom
 
 ***Phase 1:*** Initial Triage
 
-** Network Analysis (Wireshark) **
+**Network Analysis (Wireshark)**
 The RecordUser.pcapng file immediately provided two critical artifacts:
 1. An HTTP Download: The executable downloads a small file named anonymous. This file was extracted and later identified as bytecode for the VM.
 2. A TCP C2 Stream: The executable connects to 192.168.134.132 on port 8888 and sends a payload. This payload was extracted and identified as the encrypted second-stage DLL.Static Analysis
