@@ -46,11 +46,10 @@ The decrypted DLL was analyzed, and its exported functions (gen_from_file, get_r
 This function was a simple, custom virtual machine that processed bytecode.
 
 ## The VM had five opcodes:
-1: Store a value in memory buffer
-2: Store a value in memory buffer
-3: Perform addition or subtraction on buffer 1 and store in buffer 
-4: Perform an XOR operation between buffers 3 and 3, writing the result to the final flag buffer.
-5: Halt execution.The bytecode for this VM was the anonymous file downloaded in Phase 1.
+1. Store a value in memory buffer
+3. Perform addition or subtraction on buffer 1 and store in buffer 
+4. Perform an XOR operation between buffers 3 and 3, writing the result to the final flag buffer.
+5. Halt execution.The bytecode for this VM was the anonymous file downloaded in Phase 1.
 
 ### Flag Recovery
 By writing a Python script to emulate the VM and feeding it the anonymous bytecode, the final flag was generated.
